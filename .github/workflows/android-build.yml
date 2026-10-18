@@ -19,7 +19,7 @@ concurrency:
 jobs:
   build:
     name: Compile Meteor Android fork
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
 
     steps:
@@ -42,7 +42,7 @@ jobs:
 
       - name: Upload built JARs
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: meteor-android-build
           path: build/libs/*.jar
