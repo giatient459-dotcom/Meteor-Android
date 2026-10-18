@@ -1,0 +1,50 @@
+name: Android Fork CI
+
+on:
+  push:
+    branches:
+      - android
+  pull_request:
+    branches:
+      - android
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compile Meteor Android fork
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build
+        run: ./gradlew --no-daemon build -Pcommit=${{ github.sha }} -Pbuild_number=0
+
+      - name: Upload built JARs
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meteor-android-build
+          path: build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 7
