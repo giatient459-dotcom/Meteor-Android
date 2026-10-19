@@ -68,6 +68,7 @@ public class Commands {
         add(new WaspCommand());
         add(new LocateCommand());
         add(new HelpCommand());
+        add(new GuiCommand());
 
         COMMANDS.sort(Comparator.comparing(Command::getName));
 
