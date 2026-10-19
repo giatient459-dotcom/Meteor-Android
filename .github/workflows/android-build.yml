@@ -1,24 +1,24 @@
-name: Android Fork CI
+name: Meteor Android - Minecraft 26.2 CI
 
 on:
   push:
     branches:
-      - android
+      - mc-26.2
   pull_request:
     branches:
-      - android
+      - mc-26.2
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: android-ci-${{ github.ref }}
+  group: meteor-android-26-2-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    name: Compile Meteor Android fork
+    name: Compile Meteor Android for Minecraft 26.2
     runs-on: ubuntu-24.04
     timeout-minutes: 40
 
@@ -44,7 +44,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v7
         with:
-          name: meteor-android-build
+          name: meteor-android-mc-26.2-build
           path: build/libs/*.jar
           if-no-files-found: error
           retention-days: 7
