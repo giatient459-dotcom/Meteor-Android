@@ -270,37 +270,40 @@ public class ModulesScreen extends TabScreen {
         @Override
         protected void onCalculateWidgetPositions() {
             double pad = theme.scale(4);
-            double h = theme.scale(40);
+            double windowWidth = getWindowWidth();
+            double windowHeight = getWindowHeight();
 
             double x = this.x + pad;
             double y = this.y;
+            double rowHeight = 0;
 
             for (Cell<?> cell : cells) {
-                double windowWidth = getWindowWidth();
-                double windowHeight = getWindowHeight();
-
-                if (x + cell.width > windowWidth) {
-                    x = x + pad;
-                    y += h;
-                }
-
-                if (x > windowWidth) {
-                    x = windowWidth / 2.0 - cell.width / 2.0;
-                    if (x < 0) x = 0;
-                }
-                if (y > windowHeight) {
-                    y = windowHeight / 2.0 - cell.height / 2.0;
-                    if (y < 0) y = 0;
-                }
-
-                cell.x = x;
-                cell.y = y;
-
                 cell.width = cell.widget().width;
                 cell.height = cell.widget().height;
 
+                // Wrap to a new row without overlapping the previous row.
+                if (x > this.x + pad && x + cell.width > windowWidth - pad) {
+                    x = this.x + pad;
+                    y += rowHeight + pad;
+                    rowHeight = 0;
+                }
+
+                // Keep oversized windows visible and centered on narrow displays.
+                if (cell.width > windowWidth - pad * 2) {
+                    cell.x = Math.max(0, (windowWidth - cell.width) / 2.0);
+                } else {
+                    cell.x = Math.max(pad, Math.min(x, windowWidth - cell.width - pad));
+                }
+
+                if (cell.height > windowHeight - pad * 2) {
+                    cell.y = pad;
+                } else {
+                    cell.y = Math.max(pad, Math.min(y, windowHeight - cell.height - pad));
+                }
+
                 cell.alignWidget();
 
+                rowHeight = Math.max(rowHeight, cell.height);
                 x += cell.width + pad;
             }
         }
