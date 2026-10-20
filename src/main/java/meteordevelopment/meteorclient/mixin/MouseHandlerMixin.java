@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
 @Mixin(MouseHandler.class)
@@ -41,6 +42,14 @@ public abstract class MouseHandlerMixin {
         Input.setButtonState(rawButtonInfo.button(), action != GLFW_RELEASE);
 
         MouseButtonEvent click = new MouseButtonEvent(getScaledXPos(minecraft.getWindow()), getScaledYPos(minecraft.getWindow()), rawButtonInfo);
+
+        // Handle the in-game GUI shortcut before other mouse-bound modules see the click.
+        if (action == GLFW_PRESS && MeteorClient.INSTANCE != null
+            && MeteorClient.INSTANCE.handleTouchGuiButtonClick(click.x(), click.y())) {
+            ci.cancel();
+            return;
+        }
+
         if (MeteorClient.EVENT_BUS.post(MouseClickEvent.get(click, KeyAction.get(action))).isCancelled()) ci.cancel();
     }
 
