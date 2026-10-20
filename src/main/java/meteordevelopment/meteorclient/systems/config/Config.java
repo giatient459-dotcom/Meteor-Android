@@ -194,6 +194,13 @@ public class Config extends System<Config> {
         .build()
     );
 
+    public final Setting<Boolean> touchGuiButton = sgMisc.add(new BoolSetting.Builder()
+        .name("touch-gui-button")
+        .description("Show an on-screen button to open the Meteor GUI without entering a command.")
+        .defaultValue(true)
+        .build()
+    );
+
     public List<String> dontShowAgainPrompts = new ArrayList<>();
 
     public Config() {
