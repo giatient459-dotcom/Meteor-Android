@@ -27,6 +27,11 @@ public class WMeteorModule extends WPressable implements MeteorWidget {
 
     private double animationProgress2;
 
+    // Long-press support lets touch users open module settings without a right mouse button.
+    private static final double LONG_PRESS_SECONDS = 0.45;
+    private double leftPressDuration;
+    private boolean longPressTriggered;
+
     public WMeteorModule(Module module, String title) {
         this.module = module;
         this.title = title;
@@ -57,6 +62,32 @@ public class WMeteorModule extends WPressable implements MeteorWidget {
     }
 
     @Override
+    public boolean onMouseClicked(net.minecraft.client.input.MouseButtonEvent click, boolean doubled) {
+        boolean handled = super.onMouseClicked(click, doubled);
+        if (handled && click.button() == GLFW_MOUSE_BUTTON_LEFT) {
+            leftPressDuration = 0;
+            longPressTriggered = false;
+        }
+        return handled;
+    }
+
+    @Override
+    public boolean onMouseReleased(net.minecraft.client.input.MouseButtonEvent click) {
+        if (pressed && click.button() == GLFW_MOUSE_BUTTON_LEFT && longPressTriggered) {
+            pressed = false;
+            leftPressDuration = 0;
+            longPressTriggered = false;
+            mc.gui.setScreen(theme.moduleScreen(module));
+            return false;
+        }
+
+        boolean handled = super.onMouseReleased(click);
+        leftPressDuration = 0;
+        longPressTriggered = false;
+        return handled;
+    }
+
+    @Override
     protected void onPressed(int button) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) module.toggle();
         else if (button == GLFW_MOUSE_BUTTON_RIGHT) mc.gui.setScreen(theme.moduleScreen(module));
@@ -64,6 +95,14 @@ public class WMeteorModule extends WPressable implements MeteorWidget {
 
     @Override
     protected void onRender(GuiRenderer renderer, double mouseX, double mouseY, double delta) {
+        if (pressed && mouseOver && !longPressTriggered) {
+            leftPressDuration += delta;
+            if (leftPressDuration >= LONG_PRESS_SECONDS) longPressTriggered = true;
+        } else if (!mouseOver) {
+            leftPressDuration = 0;
+            longPressTriggered = false;
+        }
+
         MeteorGuiTheme theme = theme();
         double pad = pad();
 
