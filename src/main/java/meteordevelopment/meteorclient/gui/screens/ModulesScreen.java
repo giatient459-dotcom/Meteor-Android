@@ -268,6 +268,40 @@ public class ModulesScreen extends TabScreen {
         }
 
         @Override
+        protected void onCalculateSize() {
+            double pad = theme.scale(4);
+            double startX = this.x + pad;
+            double x = startX;
+            double widthLimit = getWindowWidth() - pad;
+            int rows = 1;
+
+            // Count the rows using the already-calculated category widths.
+            for (Cell<?> cell : cells) {
+                double cellWidth = cell.widget().width;
+                if (x > startX && x + cellWidth > widthLimit) {
+                    rows++;
+                    x = startX;
+                }
+                x += cellWidth + pad;
+            }
+
+            // When categories wrap on narrow screens, constrain each window's list
+            // so all rows fit vertically instead of overlapping at the screen edge.
+            double rowHeight = (getWindowHeight() - pad * (rows + 1)) / rows;
+            for (Cell<?> cell : cells) {
+                if (cell.widget() instanceof WWindow window) {
+                    double defaultMaxHeight = getWindowHeight() - theme.scale(128);
+                    window.view.maxHeight = rows > 1
+                        ? Math.max(theme.scale(40), rowHeight - theme.scale(48))
+                        : defaultMaxHeight;
+                    window.calculateSize();
+                }
+            }
+
+            super.onCalculateSize();
+        }
+
+        @Override
         protected void onCalculateWidgetPositions() {
             double pad = theme.scale(4);
             double windowWidth = getWindowWidth();
