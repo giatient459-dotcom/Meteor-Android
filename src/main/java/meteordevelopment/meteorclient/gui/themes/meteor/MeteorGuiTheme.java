@@ -49,8 +49,8 @@ public class MeteorGuiTheme extends GuiTheme {
 
     public final Setting<Double> scale = sgGeneral.add(new DoubleSetting.Builder()
         .name("scale")
-        .description("Scale of the GUI. Use a larger value for touch-friendly controls on high-resolution or mobile displays.")
-        .defaultValue(1.25)
+        .description("Scale of the GUI, including widget spacing and text. A larger default improves readability on touch displays.")
+        .defaultValue(1.5)
         .min(0.75)
         .sliderRange(0.75, 4)
         .onSliderRelease()
