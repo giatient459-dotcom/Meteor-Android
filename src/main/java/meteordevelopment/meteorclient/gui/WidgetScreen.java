@@ -130,6 +130,12 @@ public abstract class WidgetScreen extends Screen {
         mouseX *= s;
         mouseY *= s;
 
+        // Touch-driven launchers may deliver a click without a preceding mouse-move event.
+        // Refresh hover state from the click coordinates so the touched widget is the target.
+        root.mouseMoved(mouseX, mouseY, lastMouseX, lastMouseY);
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+
         // Unfocus all text boxes that are not under the mouse cursor
         loopWidgets(root, widget -> {
             if (widget instanceof WTextBox textBox && textBox.isFocused() && !textBox.mouseOver) {
