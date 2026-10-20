@@ -10,6 +10,7 @@ import meteordevelopment.meteorclient.addons.MeteorAddon;
 import meteordevelopment.meteorclient.events.game.OpenScreenEvent;
 import meteordevelopment.meteorclient.events.meteor.KeyInputEvent;
 import meteordevelopment.meteorclient.events.meteor.MouseClickEvent;
+import meteordevelopment.meteorclient.events.render.Render2DEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.gui.GuiThemes;
 import meteordevelopment.meteorclient.gui.WidgetScreen;
@@ -18,6 +19,7 @@ import meteordevelopment.meteorclient.systems.Systems;
 import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.hud.screens.AddHudElementScreen;
 import meteordevelopment.meteorclient.systems.hud.screens.HudEditorScreen;
+import meteordevelopment.meteorclient.systems.hud.HudRenderer;
 import meteordevelopment.meteorclient.systems.hud.screens.HudElementScreen;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Modules;
@@ -30,6 +32,7 @@ import meteordevelopment.meteorclient.utils.misc.Version;
 import meteordevelopment.meteorclient.utils.misc.input.KeyAction;
 import meteordevelopment.meteorclient.utils.misc.input.KeyBinds;
 import meteordevelopment.meteorclient.utils.network.OnlinePlayers;
+import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
@@ -61,6 +64,15 @@ public class MeteorClient implements ClientModInitializer {
 
     public static Minecraft mc;
     public static final IEventBus EVENT_BUS = new EventBus();
+
+    // Small in-game shortcut intended for touch controls on launchers without a Right Shift button.
+    private static final double TOUCH_GUI_BUTTON_X = 10;
+    private static final double TOUCH_GUI_BUTTON_Y = 90;
+    private static final double TOUCH_GUI_BUTTON_WIDTH = 66;
+    private static final double TOUCH_GUI_BUTTON_HEIGHT = 30;
+    private static final Color TOUCH_GUI_BUTTON_BACKGROUND = new Color(20, 20, 26, 220);
+    private static final Color TOUCH_GUI_BUTTON_ACCENT = new Color(145, 61, 226);
+    private static final Color TOUCH_GUI_BUTTON_TEXT = new Color(255, 255, 255);
     public static final File FOLDER = FabricLoader.getInstance().getGameDir().resolve(MOD_ID).toFile();
     public static final Logger LOG;
 
@@ -155,6 +167,57 @@ public class MeteorClient implements ClientModInitializer {
         if (mc.gui.screen() == null && mc.gui.overlay() == null && KeyBinds.OPEN_COMMANDS.consumeClick()) {
             mc.gui.setScreen(new ChatScreen(Config.get().prefix.get(), true));
         }
+    }
+
+    @EventHandler
+    private void onRender2D(Render2DEvent event) {
+        if (!shouldShowTouchGuiButton()) return;
+
+        HudRenderer renderer = HudRenderer.INSTANCE;
+        renderer.begin(event.graphics);
+
+        renderer.quad(TOUCH_GUI_BUTTON_X, TOUCH_GUI_BUTTON_Y, TOUCH_GUI_BUTTON_WIDTH, TOUCH_GUI_BUTTON_HEIGHT, TOUCH_GUI_BUTTON_BACKGROUND);
+        renderer.quad(TOUCH_GUI_BUTTON_X, TOUCH_GUI_BUTTON_Y, TOUCH_GUI_BUTTON_WIDTH, 2, TOUCH_GUI_BUTTON_ACCENT);
+        renderer.quad(TOUCH_GUI_BUTTON_X, TOUCH_GUI_BUTTON_Y + TOUCH_GUI_BUTTON_HEIGHT - 2, TOUCH_GUI_BUTTON_WIDTH, 2, TOUCH_GUI_BUTTON_ACCENT);
+        renderer.quad(TOUCH_GUI_BUTTON_X, TOUCH_GUI_BUTTON_Y, 2, TOUCH_GUI_BUTTON_HEIGHT, TOUCH_GUI_BUTTON_ACCENT);
+        renderer.quad(TOUCH_GUI_BUTTON_X + TOUCH_GUI_BUTTON_WIDTH - 2, TOUCH_GUI_BUTTON_Y, 2, TOUCH_GUI_BUTTON_HEIGHT, TOUCH_GUI_BUTTON_ACCENT);
+
+        double textScale = 1.2;
+        double textWidth = renderer.textWidth("GUI", false, textScale);
+        double textHeight = renderer.textHeight(false, textScale);
+        renderer.text(
+            "GUI",
+            TOUCH_GUI_BUTTON_X + (TOUCH_GUI_BUTTON_WIDTH - textWidth) / 2,
+            TOUCH_GUI_BUTTON_Y + (TOUCH_GUI_BUTTON_HEIGHT - textHeight) / 2,
+            TOUCH_GUI_BUTTON_TEXT,
+            false,
+            textScale
+        );
+
+        renderer.end();
+    }
+
+    private boolean shouldShowTouchGuiButton() {
+        Config config = Config.get();
+        return Utils.canUpdate()
+            && mc.gui.screen() == null
+            && mc.gui.overlay() == null
+            && config != null
+            && config.touchGuiButton.get();
+    }
+
+    public boolean handleTouchGuiButtonClick(double mouseX, double mouseY) {
+        if (!shouldShowTouchGuiButton()) return false;
+
+        boolean inside = mouseX >= TOUCH_GUI_BUTTON_X
+            && mouseX <= TOUCH_GUI_BUTTON_X + TOUCH_GUI_BUTTON_WIDTH
+            && mouseY >= TOUCH_GUI_BUTTON_Y
+            && mouseY <= TOUCH_GUI_BUTTON_Y + TOUCH_GUI_BUTTON_HEIGHT;
+
+        if (!inside) return false;
+
+        toggleGui();
+        return true;
     }
 
     @EventHandler
